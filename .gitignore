@@ -1,0 +1,23 @@
+Set-Content -Path .gitignore -Value @"
+# Django
+*.log
+*.pot
+*.pyc
+__pycache__/
+local_settings.py
+db.sqlite3
+media/
+
+# Environnement
+.env
+
+# Fichiers générés
+staticfiles/
+
+# Cache et autres
+.DS_Store
+.idea/
+.vscode/
+venv/
+env/
+"@

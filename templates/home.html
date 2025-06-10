@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Accueil - DPMG Coyah{% endblock %}
+
+{% block content %}
+<div class="jumbotron bg-light p-4 mb-4 rounded border">
+    <div class="container">
+        <h1 class="display-5">Bienvenue sur le système de gestion documentaire</h1>
+        <p class="lead">Direction Préfectorale des Mines et Géologie de Coyah</p>
+        <hr class="my-4">
+        <p>Ce système permet de centraliser et gérer les documents réglementaires et les dossiers des sociétés de carrières.</p>
+        {% if not user.is_authenticated %}
+        <p>
+            <a class="btn btn-primary btn-lg" href="{% url 'login' %}" role="button">
+                <i class="fas fa-sign-in-alt me-1"></i> Se connecter
+            </a>
+            <a class="btn btn-outline-secondary btn-lg" href="{% url 'company_list' %}" role="button">
+                <i class="fas fa-building me-1"></i> Voir les sociétés
+            </a>
+        </p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Statistiques générales -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center bg-primary text-white mb-3">
+            <div class="card-body">
+                <h1 class="display-4">{{ stats.total_companies }}</h1>
+                <h6 class="card-title">Sociétés de carrière</h6>
+            </div>
+            <div class="card-footer d-grid">
+                <a href="{% url 'company_list' %}" class="btn btn-light btn-sm">
+                    <i class="fas fa-list me-1"></i> Voir tout
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center bg-success text-white mb-3">
+            <div class="card-body">
+                <h1 class="display-4">{{ stats.total_documents }}</h1>
+                <h6 class="card-title">Documents administratifs</h6>
+            </div>
+            <div class="card-footer d-grid">
+                <a href="{% url 'admin_doc_list' %}" class="btn btn-light btn-sm">
+                    <i class="fas fa-list me-1"></i> Voir tout
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center bg-info text-white mb-3">
+            <div class="card-body">
+                <h1 class="display-4">{{ doc_types.decrets }}</h1>
+                <h6 class="card-title">Décrets</h6>
+            </div>
+            <div class="card-footer d-grid">
+                <a href="{% url 'decret_list' %}" class="btn btn-light btn-sm">
+                    <i class="fas fa-list me-1"></i> Voir
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center bg-warning text-dark mb-3">
+            <div class="card-body">
+                <h1 class="display-4">{{ doc_types.arretes }}</h1>
+                <h6 class="card-title">Arrêtés</h6>
+            </div>
+            <div class="card-footer d-grid">
+                <a href="{% url 'arrete_list' %}" class="btn btn-light btn-sm">
+                    <i class="fas fa-list me-1"></i> Voir
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center bg-secondary text-white mb-3">
+            <div class="card-body">
+                <h1 class="display-4">{{ doc_types.notes }}</h1>
+                <h6 class="card-title">Notes</h6>
+            </div>
+            <div class="card-footer d-grid">
+                <a href="{% url 'note_list' %}" class="btn btn-light btn-sm">
+                    <i class="fas fa-list me-1"></i> Voir
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Contenu principal avec onglets -->
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" id="dashboardTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="companies-tab" data-bs-toggle="tab" data-bs-target="#companies" type="button" role="tab" aria-controls="companies" aria-selected="true">
+                            <i class="fas fa-building me-1"></i> Sociétés récentes
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" type="button" role="tab" aria-controls="documents" aria-selected="false">
+                            <i class="fas fa-file-alt me-1"></i> Documents récents
+                        </button>
+                    </li>
+                    {% if user.is_authenticated %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="actions-tab" data-bs-toggle="tab" data-bs-target="#actions" type="button" role="tab" aria-controls="actions" aria-selected="false">
+                            <i class="fas fa-tasks me-1"></i> Actions rapides
+                        </button>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="dashboardTabContent">
+                    <!-- Onglet des sociétés récentes -->
+                    <div class="tab-pane fade show active" id="companies" role="tabpanel" aria-labelledby="companies-tab">
+                        {% if stats.recent_companies %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Nom de la société</th>
+                                            <th>Date de création</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for company in stats.recent_companies %}
+                                            <tr>
+                                                <td>{{ company.nom }}</td>
+                                                <td>{{ company.date_creation|date:"d/m/Y" }}</td>
+                                                <td>
+                                                    <a href="{% url 'company_detail' company.id %}" class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-eye"></i> Détails
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="text-center mt-3">
+                                <a href="{% url 'company_list' %}" class="btn btn-outline-primary">
+                                    <i class="fas fa-list"></i> Voir toutes les sociétés
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">
+                                Aucune société enregistrée dans le système.
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Onglet des documents récents -->
+                    <div class="tab-pane fade" id="documents" role="tabpanel" aria-labelledby="documents-tab">
+                        {% if stats.recent_documents %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Type</th>
+                                            <th>Numéro</th>
+                                            <th>Titre</th>
+                                            <th>Date</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for doc in stats.recent_documents %}
+                                            <tr>
+                                                <td>
+                                                    {% if doc.type == 'DECRET' %}
+                                                        <span class="badge bg-info">Décret</span>
+                                                    {% elif doc.type == 'ARRETE' %}
+                                                        <span class="badge bg-warning">Arrêté</span>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">Note</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>{{ doc.numero }}</td>
+                                                <td>{{ doc.titre }}</td>
+                                                <td>{{ doc.date_enregistrement|date:"d/m/Y" }}</td>
+                                                <td>
+                                                    <a href="{% url 'admin_doc_detail' doc.id %}" class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-eye"></i> Détails
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="text-center mt-3">
+                                <a href="{% url 'admin_doc_list' %}" class="btn btn-outline-primary">
+                                    <i class="fas fa-list"></i> Voir tous les documents
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">
+                                Aucun document administratif enregistré dans le système.
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Onglet des actions rapides (pour utilisateurs connectés) -->
+                    {% if user.is_authenticated %}
+                    <div class="tab-pane fade" id="actions" role="tabpanel" aria-labelledby="actions-tab">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header">Actions sur les sociétés</div>
+                                    <div class="card-body">
+                                        <div class="d-grid gap-2">
+                                            <a href="{% url 'company_create' %}" class="btn btn-outline-primary">
+                                                <i class="fas fa-plus-circle"></i> Ajouter une nouvelle société
+                                            </a>
+                                            <a href="{% url 'company_list' %}" class="btn btn-outline-secondary">
+                                                <i class="fas fa-search"></i> Rechercher une société
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header">Actions sur les documents</div>
+                                    <div class="card-body">
+                                        <div class="d-grid gap-2">
+                                            <a href="{% url 'admin_doc_create' %}" class="btn btn-outline-primary">
+                                                <i class="fas fa-plus-circle"></i> Ajouter un nouveau document
+                                            </a>
+                                            <div class="dropdown mt-2">
+                                                <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button" id="documentTypeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <i class="fas fa-filter"></i> Filtrer par type
+                                                </button>
+                                                <ul class="dropdown-menu w-100" aria-labelledby="documentTypeDropdown">
+                                                    <li>
+                                                        <a class="dropdown-item" href="{% url 'decret_list' %}">
+                                                            <i class="fas fa-file-contract"></i> Décrets
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item" href="{% url 'arrete_list' %}">
+                                                            <i class="fas fa-file-signature"></i> Arrêtés
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item" href="{% url 'note_list' %}">
+                                                            <i class="fas fa-sticky-note"></i> Notes de service
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

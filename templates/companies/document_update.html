@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Mettre à jour un Document - DPMG Coyah{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">Mettre à jour le document {{ object.document.nom }}</h4>
+    </div>
+    <div class="card-body">
+        <div class="mb-3">
+            <strong>Société:</strong> {{ object.company.nom }}<br>
+            <strong>Document:</strong> {{ object.document.nom }}<br>
+            <strong>Soumis le:</strong> {{ object.date_submission|date:"d/m/Y H:i" }}
+        </div>
+
+        <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+            {{ form|crispy }}
+            <div class="mt-3">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-sync-alt"></i> Mettre à jour
+                </button>
+                <a href="{% url 'company_detail' object.company.id %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Annuler
+                </a>
+                <a href="{% url 'document_versions' object.id %}" class="btn btn-outline-info">
+                    <i class="fas fa-history"></i> Voir toutes les versions
+                </a>
+            </div>
+        </form>
+    </div>
+    <div class="card-footer">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> Le système garde automatiquement un historique de toutes les versions de ce document. Vous pourrez toujours accéder aux anciennes versions si nécessaire.
+        </div>
+    </div>
+</div>
+{% endblock %}

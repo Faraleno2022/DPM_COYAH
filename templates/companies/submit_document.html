@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Soumettre un Document - {{ company.nom }} - DPMG Coyah{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">Soumettre un Document pour {{ company.nom }}</h4>
+    </div>
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+            {{ form|crispy }}
+            <div class="mt-3">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-upload"></i> Soumettre le document
+                </button>
+                <a href="{% url 'company_detail' company.id %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Annuler
+                </a>
+            </div>
+        </form>
+    </div>
+    <div class="card-footer">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> Seuls les documents requis qui n'ont pas encore été soumis sont affichés dans la liste.
+        </div>
+    </div>
+</div>
+{% endblock %}

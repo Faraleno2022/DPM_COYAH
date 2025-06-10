@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Supprimer Document - DPMG Coyah{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-danger text-white">
+        <h4 class="mb-0">Confirmation de suppression de document</h4>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-warning">
+            <h5><i class="fas fa-exclamation-triangle"></i> Attention!</h5>
+            <p>Vous êtes sur le point de supprimer le document <strong>{{ object.document.nom }}</strong> de la société <strong>{{ object.company.nom }}</strong>.</p>
+            <p>Cette action est irréversible!</p>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">
+                <i class="fas fa-trash"></i> Confirmer la suppression
+            </button>
+            <a href="{% url 'company_detail' object.company.id %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Annuler
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %}

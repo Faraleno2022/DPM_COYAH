@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}Soumettre des documents | {{ company.nom }} | DPMG Coyah{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- En-tête et navigation inchangés -->
+    
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Liste des documents requis</h5>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-4">
+                Vous pouvez soumettre plusieurs documents à la fois. Seuls les documents qui n'ont pas encore été soumis sont affichés ci-dessous.
+                <br>Pour chaque document, cliquez sur "Parcourir" pour sélectionner un fichier, puis cliquez sur "Soumettre" pour envoyer tous les documents sélectionnés.
+            </p>
+            
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                {% if not form.fields %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> Tous les documents requis ont déjà été soumis pour cette société.
+                </div>
+                {% else %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="40%">Document requis</th>
+                                <th width="40%">Description</th>
+                                <th width="20%">Fichier</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- MODIFICATION IMPORTANTE ICI -->
+                            <!-- Ne pas utiliser de filtres personnalisés -->
+                            {{ form.as_table }}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload me-1"></i> Soumettre les documents
+                    </button>
+                    <a href="{% url 'company_detail' company.pk %}" class="btn btn-outline-secondary ms-2">
+                        <i class="fas fa-arrow-left me-1"></i> Annuler
+                    </a>
+                </div>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Ajouter une prévisualisation des fichiers sélectionnés
+        $('input[type="file"]').change(function() {
+            const fileName = $(this).val().split('\\').pop();
+            if (fileName) {
+                const fileSize = this.files[0].size / 1024 / 1024; // en MB
+                const fileInfo = `${fileName} (${fileSize.toFixed(2)} MB)`;
+                
+                // Ajouter une notification à côté du champ
+                const infoSpan = $(this).next('.file-info');
+                if (infoSpan.length) {
+                    infoSpan.text(fileInfo);
+                } else {
+                    $(this).after(`<small class="file-info text-success ms-2"><i class="fas fa-check-circle"></i> ${fileInfo}</small>`);
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

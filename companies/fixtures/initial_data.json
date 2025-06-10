@@ -1,0 +1,227 @@
+[
+  {
+    "model": "companies.requireddocument",
+    "pk": 1,
+    "fields": {
+      "nom": "Autorisation d'exploitation / Renouvellement",
+      "description": "Document officiel autorisant l'exploitation de la carrière",
+      "condition": null
+    }
+  },
+  {
+    "model": "companies.requireddocument",
+    "pk": 2,
+    "fields": {
+      "nom": "PV de bornage",
+      "description": "Procès-verbal de bornage délimitant la zone d'exploitation",
+      "condition": null
+    }
+  },
+  {
+    "model": "companies.requireddocument",
+    "pk": 3,
+    "fields": {
+      "nom": "Plan de gestion environnemental et social (PGES)",
+      "description": "Document détaillant les mesures de protection environnementale et sociale",
+      "condition": null
+    }
+  },
+  {
+    "model": "companies.requireddocument",
+    "pk": 4,
+    "fields": {
+      "nom": "Autorisation / Certificat environnemental",
+      "description": "Autorisation des autorités environnementales",
+      "condition": null
+    }
+  },
+  {
+    "model": "companies.requireddocument",
+    "pk": 5,
+    "fields": {
+      "nom": "Liste des travailleurs guinéens",
+      "description": "Liste nominative des employés de nationalité guinéenne",
+      "condition": null
+    }
+  },
+  {
+    "model": "companies.requireddocument",
+    "pk": 6,
+    "fields": {
+      "nom": "Liste des travailleurs étrangers",
+      "description": "Liste nominative des employés de nationalité étrangère",
+      "condition": null
+    }
+  },
+  {
+    "model": "companies.requireddocument",
+    "pk": 7,
+    "fields": {
+      "nom": "Déclaration AGUPE/IGT",
+      "description": "Déclaration auprès de l'Agence Guinéenne pour la Promotion de l'Emploi et l'Inspection Générale du Travail",
+      "condition": null
+    }
+  },
+  {
+    "model": "companies.requireddocument",
+    "pk": 8,
+    "fields": {
+      "nom": "Carnet d'assurance sociale",
+      "description": "Attestation d'affiliation au système d'assurance sociale",
+      "condition": null
+    }
+  },
+  {
+    "model": "companies.requireddocument",
+    "pk": 9,
+    "fields": {
+      "nom": "Liste des engins et équipements",
+      "description": "Inventaire de tous les engins et équipements utilisés sur le site",
+      "condition": null
+    }
+  },
+  {
+    "model": "companies.requireddocument",
+    "pk": 10,
+    "fields": {
+      "nom": "Assurance des engins",
+      "description": "Certificats d'assurance pour les engins et équipements",
+      "condition": null
+    }
+  },
+  {
+    "model": "companies.requireddocument",
+    "pk": 11,
+    "fields": {
+      "nom": "RCCM / Statut",
+      "description": "Registre du Commerce et du Crédit Mobilier et statuts de l'entreprise",
+      "condition": null
+    }
+  },
+  {
+    "model": "companies.requireddocument",
+    "pk": 12,
+    "fields": {
+      "nom": "Registre de production",
+      "description": "Document détaillant la production de la carrière",
+      "condition": null
+    }
+  },
+  {
+    "model": "companies.requireddocument",
+    "pk": 13,
+    "fields": {
+      "nom": "États financiers N-1",
+      "description": "Bilan et comptes de résultats de l'année précédente",
+      "condition": null
+    }
+  },
+  {
+    "model": "companies.requireddocument",
+    "pk": 14,
+    "fields": {
+      "nom": "Balance générale",
+      "description": "Document comptable présentant la balance des comptes",
+      "condition": null
+    }
+  },
+  {
+    "model": "companies.requireddocument",
+    "pk": 15,
+    "fields": {
+      "nom": "DMU (année N-1)",
+      "description": "Déclaration Mensuelle Unique de l'année précédente",
+      "condition": null
+    }
+  },
+  {
+    "model": "companies.requireddocument",
+    "pk": 16,
+    "fields": {
+      "nom": "Frais CPDM",
+      "description": "Justificatifs de paiement des frais au Centre de Promotion et de Développement Minier",
+      "condition": null
+    }
+  },
+  {
+    "model": "companies.requireddocument",
+    "pk": 17,
+    "fields": {
+      "nom": "Droit fixe / timbre",
+      "description": "Justificatifs de paiement des droits fixes et timbres",
+      "condition": null
+    }
+  },
+  {
+    "model": "companies.requireddocument",
+    "pk": 18,
+    "fields": {
+      "nom": "Taxe superficiaire",
+      "description": "Justificatifs de paiement de la taxe superficiaire",
+      "condition": null
+    }
+  },
+  {
+    "model": "companies.requireddocument",
+    "pk": 19,
+    "fields": {
+      "nom": "Permis de travail & passeports expats",
+      "description": "Permis de travail et copies des passeports des travailleurs expatriés",
+      "condition": null
+    }
+  },
+  {
+    "model": "companies.requireddocument",
+    "pk": 20,
+    "fields": {
+      "nom": "PV délégation syndicale",
+      "description": "Procès-verbal d'élection des délégués syndicaux",
+      "condition": "Uniquement pour les entreprises ayant moins de 25 employés"
+    }
+  },
+  {
+    "model": "companies.requireddocument",
+    "pk": 21,
+    "fields": {
+      "nom": "Règlement intérieur",
+      "description": "Document définissant les règles applicables au sein de l'entreprise",
+      "condition": "Obligatoire pour les entreprises de plus de 25 employés"
+    }
+  },
+  {
+    "model": "companies.requireddocument",
+    "pk": 22,
+    "fields": {
+      "nom": "PV Comité SST + rapports",
+      "description": "Procès-verbaux et rapports du Comité de Santé et Sécurité au Travail",
+      "condition": null
+    }
+  },
+  {
+    "model": "companies.requireddocument",
+    "pk": 23,
+    "fields": {
+      "nom": "Liste des clients (volume vendu)",
+      "description": "Liste des clients avec indication des volumes de matériaux vendus",
+      "condition": null
+    }
+  },
+  {
+    "model": "companies.requireddocument",
+    "pk": 24,
+    "fields": {
+      "nom": "Fiche de liquidation + quittances",
+      "description": "Fiches de liquidation et quittances de paiement des taxes",
+      "condition": null
+    }
+  },
+  {
+    "model": "companies.requireddocument",
+    "pk": 25,
+    "fields": {
+      "nom": "Immatriculation ONFPP + 3 quittances",
+      "description": "Attestation d'immatriculation à l'Office National de Formation et de Perfectionnement Professionnel et quittances des 3 derniers paiements",
+      "condition": null
+    }
+  }
+]

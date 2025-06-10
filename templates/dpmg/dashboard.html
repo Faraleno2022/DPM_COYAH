@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    {% if dpmg.logo %}
+                    <img src="{{ dpmg.logo.url }}" alt="Logo DPMG" class="img-fluid mb-3" style="max-height: 120px;">
+                    {% else %}
+                    <div class="display-4 text-muted mb-3">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    {% endif %}
+                    <h5 class="mb-1">DPMG {{ dpmg.prefecture }}</h5>
+                    <p class="text-muted mb-3">{{ dpmg.region }}</p>
+                    <hr>
+                    <div class="text-start">
+                        <p><i class="fas fa-phone me-2 text-primary"></i> {{ dpmg.telephone }}</p>
+                        <p><i class="fas fa-map-marker-alt me-2 text-primary"></i> {{ dpmg.adresse }}</p>
+                        <p><i class="fas fa-envelope me-2 text-primary"></i> {{ dpmg.user.email }}</p>
+                    </div>
+                    <a href="{% url 'dpmg_profile' %}" class="btn btn-outline-primary btn-sm mt-2">
+                        <i class="fas fa-edit me-1"></i> Modifier mon profil
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <div class="card bg-primary text-white shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="card-title mb-0">Sociétés</h6>
+                                    <h2 class="mb-0 mt-2">{{ stats.total_companies }}</h2>
+                                </div>
+                                <div class="display-4">
+                                    <i class="fas fa-building"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <div class="card bg-success text-white shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="card-title mb-0">Documents Soumis</h6>
+                                    <h2 class="mb-0 mt-2">{{ stats.total_documents }}</h2>
+                                </div>
+                                <div class="display-4">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <div class="card bg-warning text-white shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="card-title mb-0">Dossiers Incomplets</h6>
+                                    <h2 class="mb-0 mt-2">{{ stats.incomplete_companies|length }}</h2>
+                                </div>
+                                <div class="display-4">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Soumissions Récentes</h5>
+                        <a href="#" class="btn btn-sm btn-outline-primary">Tout voir</a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Document</th>
+                                    <th>Société</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for doc in stats.recent_submissions %}
+                                <tr>
+                                    <td>{{ doc.document.nom }}</td>
+                                    <td>{{ doc.company.nom }}</td>
+                                    <td>{{ doc.date_submission|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'view_document' document_id=doc.id %}" class="btn btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-3">Aucune soumission récente</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Dossiers Incomplets</h5>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Société</th>
+                                    <th>Documents Manquants</th>
+                                    <th>Progression</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in stats.incomplete_companies %}
+                                <tr>
+                                    <td>{{ item.company.nom }}</td>
+                                    <td>{{ item.missing_count }}</td>
+                                    <td>
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ item.completion_percentage }}%"></div>
+                                        </div>
+                                        <small class="text-muted">{{ item.completion_percentage }}%</small>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'company_detail' pk=item.company.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-search"></i> Détails
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-3">Tous les dossiers sont complets</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-building me-2"></i>Liste des Sociétés</h5>
+                <div>
+                    <input type="text" class="form-control form-control-sm" id="searchCompany" placeholder="Rechercher une société..." style="width: 250px;">
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="companiesTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nom</th>
+                            <th>Adresse</th>
+                            <th>Contact</th>
+                            <th>Documents</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for company in companies %}
+                        <tr>
+                            <td>{{ company.nom }}</td>
+                            <td>{{ company.adresse|truncatechars:30 }}</td>
+                            <td>{{ company.telephone }}</td>
+                            <td>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ company.get_document_completion }}%"></div>
+                                </div>
+                                <small class="text-muted">{{ company.get_document_completion }}%</small>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'company_detail' pk=company.id %}" class="btn btn-outline-primary" title="Voir détails">
+                                        <i class="fas fa-search"></i>
+                                    </a>
+                                    <a href="{% url 'submit_document' company_id=company.id %}" class="btn btn-outline-success" title="Ajouter un document">
+                                        <i class="fas fa-file-upload"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-3">Aucune société enregistrée</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $("#searchCompany").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $("#companiesTable tbody tr").filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

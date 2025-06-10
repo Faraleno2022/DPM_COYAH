@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}Envoyer des documents par email | {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-envelope me-2"></i> Envoyer des documents par email
+            </h5>
+        </div>
+        
+        <div class="card-body">
+            <div class="mb-4">
+                <h6 class="text-muted">Société</h6>
+                <h4>{{ company.nom }}</h4>
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+                
+                <div class="mb-3">
+                    <label for="{{ form.recipient_email.id_for_label }}" class="form-label">{{ form.recipient_email.label }}</label>
+                    {{ form.recipient_email }}
+                    {% if form.recipient_email.errors %}
+                    <div class="invalid-feedback d-block">
+                        {{ form.recipient_email.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="{{ form.message.id_for_label }}" class="form-label">{{ form.message.label }}</label>
+                    {{ form.message }}
+                    <div class="form-text">Ajoutez un message personnalisé (facultatif).</div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">Sélectionnez les documents à envoyer</h6>
+                            <div>
+                                <button type="button" id="select-all" class="btn btn-sm btn-outline-primary me-2">
+                                    <i class="fas fa-check-square me-1"></i> Tout sélectionner
+                                </button>
+                                <button type="button" id="unselect-all" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-square me-1"></i> Tout désélectionner
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% if documents %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th width="5%"></th>
+                                            <th width="55%">Document</th>
+                                            <th width="20%">Date de soumission</th>
+                                            <th width="20%">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for document in documents %}
+                                        <tr>
+                                            <td>
+                                                <input type="checkbox" name="documents" value="{{ document.id }}" class="form-check-input document-checkbox">
+                                            </td>
+                                            <td>{{ document.document.nom }}</td>
+                                            <td>{{ document.date_submission|date:"d/m/Y" }}</td>
+                                            <td>
+                                                <a href="{% url 'view_document' document.id %}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                                    <i class="fas fa-eye"></i> Voir
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning">
+                                Aucun document n'a été soumis pour cette société.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-end">
+                    <a href="{% url 'company_detail' company.id %}" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-times me-1"></i> Annuler
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-1"></i> Envoyer par email
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Gérer le bouton "Tout sélectionner"
+        $("#select-all").click(function() {
+            $(".document-checkbox").prop("checked", true);
+        });
+        
+        // Gérer le bouton "Tout désélectionner"
+        $("#unselect-all").click(function() {
+            $(".document-checkbox").prop("checked", false);
+        });
+    });
+</script>
+{% endblock %}

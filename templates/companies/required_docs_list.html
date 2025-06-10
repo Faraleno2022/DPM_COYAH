@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Documents Requis (25) - DPMG Coyah{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 mt-4">
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+                <i class="fas fa-file-contract"></i> Documents Administratifs Requis
+            </h4>
+            <a href="{% url 'company_list' %}" class="btn btn-sm btn-light">
+                <i class="fas fa-building"></i> Toutes les sociétés
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Société</th>
+                            <th>Progression</th>
+                            <th class="text-center">État</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for company_data in companies_data %}
+                        <tr>
+                            <td>
+                                <strong>{{ company_data.company.nom }}</strong>
+                            </td>
+                            <td style="width: 40%">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>{{ company_data.total_submitted }} sur {{ company_data.total_required }} documents</span>
+                                    <span class="fw-bold">{{ company_data.completion_percentage }}%</span>
+                                </div>
+                                {% with percentage=company_data.completion_percentage %}
+                                <div class="progress" style="height: 20px;">
+                                    {% if percentage < 30 %}
+                                        <div class="progress-bar bg-danger" role="progressbar" style="width: {{ percentage }}%;" 
+                                            aria-valuenow="{{ percentage }}" aria-valuemin="0" aria-valuemax="100">{{ percentage }}%</div>
+                                    {% elif percentage < 70 %}
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: {{ percentage }}%;" 
+                                            aria-valuenow="{{ percentage }}" aria-valuemin="0" aria-valuemax="100">{{ percentage }}%</div>
+                                    {% else %}
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ percentage }}%;" 
+                                            aria-valuenow="{{ percentage }}" aria-valuemin="0" aria-valuemax="100">{{ percentage }}%</div>
+                                    {% endif %}
+                                </div>
+                                {% endwith %}
+                            </td>
+                            <td class="text-center">
+                                {% with missing=company_data.total_required|add:"-"|add:company_data.total_submitted %}
+                                    {% if missing == 0 %}
+                                        <span class="badge bg-success">Complet</span>
+                                    {% elif missing <= 5 %}
+                                        <span class="badge bg-warning text-dark">{{ missing }} documents manquants</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">{{ missing }} documents manquants</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                            <td class="text-center">
+                                <a href="{% url 'company_detail' company_data.company.id %}" class="btn btn-sm btn-info">
+                                    <i class="fas fa-eye"></i> Détails
+                                </a>
+                                <a href="{% url 'submit_required_documents' company_data.company.id %}" class="btn btn-sm btn-success">
+                                    <i class="fas fa-file-upload"></i> Gérer les documents
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if not companies_data %}
+            <div class="alert alert-info mt-3">
+                <i class="fas fa-info-circle"></i> Aucune société n'a été trouvée dans la base de données.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

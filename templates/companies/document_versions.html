@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Historique des versions - {{ document.document.nom }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="fas fa-history me-2"></i>Historique des versions</h2>
+            <h4 class="text-muted">{{ document.document.nom }} - {{ document.company.nom }}</h4>
+        </div>
+    </div>
+
+    <!-- Carte d'information sur le document -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Informations sur le document</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Société :</strong> {{ document.company.nom }}</p>
+                    <p><strong>Type de document :</strong> {{ document.document.nom }}</p>
+                    <p><strong>Première soumission :</strong> {{ document.date_submission|date:"d/m/Y H:i" }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Nombre de versions :</strong> {{ versions.count }}</p>
+                    <p><strong>Dernière mise à jour :</strong> 
+                        {% if versions.first %}
+                            {{ versions.first.date_creation|date:"d/m/Y H:i" }}
+                        {% else %}
+                            {{ document.date_submission|date:"d/m/Y H:i" }}
+                        {% endif %}
+                    </p>
+                    <p><strong>Fichier actuel :</strong> {{ document.fichier.name|cut:"documents/"|cut:document.company.id|cut:document.document.id|cut:"/" }}</p>
+                </div>
+            </div>
+            <div class="mt-3">
+                <a href="{% url 'view_document' document_id=document.id %}" class="btn btn-primary">
+                    <i class="fas fa-eye me-1"></i> Visualiser la version actuelle
+                </a>
+                <a href="{% url 'document_update' pk=document.id %}" class="btn btn-warning">
+                    <i class="fas fa-edit me-1"></i> Mettre à jour
+                </a>
+                <a href="{% url 'company_detail' pk=document.company.id %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Retour à la société
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Formulaire d'ajout d'une nouvelle version -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Ajouter une nouvelle version</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" class="form">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="{{ form.fichier.id_for_label }}" class="form-label">{{ form.fichier.label }}</label>
+                            {{ form.fichier }}
+                            {% if form.fichier.errors %}
+                                <div class="invalid-feedback d-block">{{ form.fichier.errors }}</div>
+                            {% endif %}
+                            {% if form.fichier.help_text %}
+                                <div class="form-text">{{ form.fichier.help_text }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">{{ form.notes.label }}</label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                                <div class="invalid-feedback d-block">{{ form.notes.errors }}</div>
+                            {% endif %}
+                            {% if form.notes.help_text %}
+                                <div class="form-text">{{ form.notes.help_text }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-plus-circle me-1"></i> Ajouter cette version
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Liste des versions -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Versions disponibles</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if versions %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Nom du fichier</th>
+                                        <th>Notes</th>
+                                        <th>Statut</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for version in versions %}
+                                    <tr{% if version.is_current %} class="table-active"{% endif %}>
+                                        <td>{{ version.date_creation|date:"d/m/Y H:i" }}</td>
+                                        <td>
+                                            {{ version.fichier.name|cut:"documents/"|cut:document.company.id|cut:document.document.id|cut:"/" }}
+                                        </td>
+                                        <td>
+                                            {% if version.notes %}
+                                                <span class="d-inline-block text-truncate" style="max-width: 150px;" data-bs-toggle="tooltip" title="{{ version.notes }}">
+                                                    {{ version.notes }}
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if version.is_current %}
+                                                <span class="badge bg-success">Version actuelle</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Archive</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{% url 'view_document' document_id=document.id %}?version={{ version.id }}" class="btn btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                {% if not version.is_current %}
+                                                    <a href="{% url 'activate_document_version' version_id=version.id %}" class="btn btn-outline-success">
+                                                        <i class="fas fa-check"></i>
+                                                    </a>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center p-4">
+                            <div class="text-muted mb-3">
+                                <i class="fas fa-info-circle fa-2x"></i>
+                            </div>
+                            <p>Aucune version précédente trouvée.</p>
+                            <p>Les versions seront créées automatiquement quand vous mettrez à jour ce document.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Activer les tooltips Bootstrap
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+});
+</script>
+{% endblock %}

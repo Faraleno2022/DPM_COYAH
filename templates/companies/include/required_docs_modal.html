@@ -1,0 +1,261 @@
+<!-- Modal pour afficher la liste des documents requis -->
+<div class="modal fade" id="requiredDocsModal" tabindex="-1" aria-labelledby="requiredDocsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="requiredDocsModalLabel"><i class="fas fa-file-alt me-2"></i>Liste des 25 documents requis - {{ company.nom }}</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted mb-3">Cette liste présente les documents administratifs requis pour toutes les sociétés.</p>
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead class="table-light">
+              <tr>
+                <th width="5%">#</th>
+                <th width="75%">Document</th>
+                <th width="20%">Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Liste statique des 25 documents avec statut dynamique -->
+              <tr>
+                <td>1</td>
+                <td>Autorisation d'exploitation / Renouvellement</td>
+                <td id="doc-status-1"></td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>PV de bornage</td>
+                <td id="doc-status-2"></td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>Plan de gestion environnemental et social (PGES)</td>
+                <td id="doc-status-3"></td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>Autorisation / Certificat environnemental</td>
+                <td id="doc-status-4"></td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td>Liste des travailleurs guinéens</td>
+                <td id="doc-status-5"></td>
+              </tr>
+              <tr>
+                <td>6</td>
+                <td>Liste des travailleurs étrangers</td>
+                <td id="doc-status-6"></td>
+              </tr>
+              <tr>
+                <td>7</td>
+                <td>Déclaration AGUPE/IGT</td>
+                <td id="doc-status-7"></td>
+              </tr>
+              <tr>
+                <td>8</td>
+                <td>Carnet d'assurance sociale</td>
+                <td id="doc-status-8"></td>
+              </tr>
+              <tr>
+                <td>9</td>
+                <td>Liste des engins et équipements</td>
+                <td id="doc-status-9"></td>
+              </tr>
+              <tr>
+                <td>10</td>
+                <td>Assurance des engins</td>
+                <td id="doc-status-10"></td>
+              </tr>
+              <tr>
+                <td>11</td>
+                <td>RCCM / Statut</td>
+                <td id="doc-status-11"></td>
+              </tr>
+              <tr>
+                <td>12</td>
+                <td>Registre de production</td>
+                <td id="doc-status-12"></td>
+              </tr>
+              <tr>
+                <td>13</td>
+                <td>Etats financiers N-1</td>
+                <td id="doc-status-13"></td>
+              </tr>
+              <tr>
+                <td>14</td>
+                <td>Balance générale</td>
+                <td id="doc-status-14"></td>
+              </tr>
+              <tr>
+                <td>15</td>
+                <td>DMU (année N-1)</td>
+                <td id="doc-status-15"></td>
+              </tr>
+              <tr>
+                <td>16</td>
+                <td>Frais CPDM</td>
+                <td id="doc-status-16"></td>
+              </tr>
+              <tr>
+                <td>17</td>
+                <td>Droit fixe / timbre</td>
+                <td id="doc-status-17"></td>
+              </tr>
+              <tr>
+                <td>18</td>
+                <td>Taxe superficiaire</td>
+                <td id="doc-status-18"></td>
+              </tr>
+              <tr>
+                <td>19</td>
+                <td>Permis de travail & passeports expats</td>
+                <td id="doc-status-19"></td>
+              </tr>
+              <tr>
+                <td>20</td>
+                <td>PV délégation syndicale (si < 25 employés)</td>
+                <td id="doc-status-20"></td>
+              </tr>
+              <tr>
+                <td>21</td>
+                <td>Règlement intérieur (< 25 employés)</td>
+                <td id="doc-status-21"></td>
+              </tr>
+              <tr>
+                <td>22</td>
+                <td>PV Comité SST + rapports</td>
+                <td id="doc-status-22"></td>
+              </tr>
+              <tr>
+                <td>23</td>
+                <td>Liste des clients (volume vendu)</td>
+                <td id="doc-status-23"></td>
+              </tr>
+              <tr>
+                <td>24</td>
+                <td>Fiche de liquidation + quittances</td>
+                <td id="doc-status-24"></td>
+              </tr>
+              <tr>
+                <td>25</td>
+                <td>Immatriculation ONFPP + 3 quittances</td>
+                <td id="doc-status-25"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a href="{% url 'submit_required_documents' company.id %}" class="btn btn-success">
+          <i class="fas fa-upload me-1"></i> Soumettre les documents pour {{ company.nom }}
+        </a>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const requiredDocsModal = document.getElementById('requiredDocsModal');
+  if (requiredDocsModal) {
+    requiredDocsModal.addEventListener('show.bs.modal', function() {
+      // Récupérer les documents soumis et requis
+      {% if submitted_docs %}
+        {% for doc in submitted_docs %}
+          // Essayer de trouver l'élément correspondant en fonction du nom du document
+          const docName = "{{ doc.document.nom|safe }}".toLowerCase();
+          
+          // Recherche par mot-clé pour chaque document
+          if (docName.includes('autorisation') && docName.includes('exploitation')) {
+            document.getElementById('doc-status-1').innerHTML = '<span class="badge bg-success">Soumis</span>';
+          }
+          if (docName.includes('bornage')) {
+            document.getElementById('doc-status-2').innerHTML = '<span class="badge bg-success">Soumis</span>';
+          }
+          if (docName.includes('pges') || (docName.includes('gestion') && docName.includes('environnemental'))) {
+            document.getElementById('doc-status-3').innerHTML = '<span class="badge bg-success">Soumis</span>';
+          }
+          if ((docName.includes('autorisation') || docName.includes('certificat')) && docName.includes('environnemental')) {
+            document.getElementById('doc-status-4').innerHTML = '<span class="badge bg-success">Soumis</span>';
+          }
+          if (docName.includes('travailleurs') && docName.includes('guinéens')) {
+            document.getElementById('doc-status-5').innerHTML = '<span class="badge bg-success">Soumis</span>';
+          }
+          if (docName.includes('travailleurs') && docName.includes('étrangers')) {
+            document.getElementById('doc-status-6').innerHTML = '<span class="badge bg-success">Soumis</span>';
+          }
+          if (docName.includes('agupe') || docName.includes('igt')) {
+            document.getElementById('doc-status-7').innerHTML = '<span class="badge bg-success">Soumis</span>';
+          }
+          if (docName.includes('carnet') && docName.includes('assurance')) {
+            document.getElementById('doc-status-8').innerHTML = '<span class="badge bg-success">Soumis</span>';
+          }
+          if (docName.includes('engins') && docName.includes('équipements')) {
+            document.getElementById('doc-status-9').innerHTML = '<span class="badge bg-success">Soumis</span>';
+          }
+          if (docName.includes('assurance') && docName.includes('engins')) {
+            document.getElementById('doc-status-10').innerHTML = '<span class="badge bg-success">Soumis</span>';
+          }
+          if (docName.includes('rccm') || docName.includes('statut')) {
+            document.getElementById('doc-status-11').innerHTML = '<span class="badge bg-success">Soumis</span>';
+          }
+          if (docName.includes('registre') && docName.includes('production')) {
+            document.getElementById('doc-status-12').innerHTML = '<span class="badge bg-success">Soumis</span>';
+          }
+          if (docName.includes('états') && docName.includes('financiers')) {
+            document.getElementById('doc-status-13').innerHTML = '<span class="badge bg-success">Soumis</span>';
+          }
+          if (docName.includes('balance') && docName.includes('générale')) {
+            document.getElementById('doc-status-14').innerHTML = '<span class="badge bg-success">Soumis</span>';
+          }
+          if (docName.includes('dmu')) {
+            document.getElementById('doc-status-15').innerHTML = '<span class="badge bg-success">Soumis</span>';
+          }
+          if (docName.includes('frais') && docName.includes('cpdm')) {
+            document.getElementById('doc-status-16').innerHTML = '<span class="badge bg-success">Soumis</span>';
+          }
+          if ((docName.includes('droit') && docName.includes('fixe')) || docName.includes('timbre')) {
+            document.getElementById('doc-status-17').innerHTML = '<span class="badge bg-success">Soumis</span>';
+          }
+          if (docName.includes('taxe') && docName.includes('superficiaire')) {
+            document.getElementById('doc-status-18').innerHTML = '<span class="badge bg-success">Soumis</span>';
+          }
+          if ((docName.includes('permis') && docName.includes('travail')) || docName.includes('passeport')) {
+            document.getElementById('doc-status-19').innerHTML = '<span class="badge bg-success">Soumis</span>';
+          }
+          if (docName.includes('délégation') && docName.includes('syndicale')) {
+            document.getElementById('doc-status-20').innerHTML = '<span class="badge bg-success">Soumis</span>';
+          }
+          if (docName.includes('règlement') && docName.includes('intérieur')) {
+            document.getElementById('doc-status-21').innerHTML = '<span class="badge bg-success">Soumis</span>';
+          }
+          if ((docName.includes('comité') && docName.includes('sst')) || (docName.includes('pv') && docName.includes('rapport'))) {
+            document.getElementById('doc-status-22').innerHTML = '<span class="badge bg-success">Soumis</span>';
+          }
+          if (docName.includes('clients') && docName.includes('volume')) {
+            document.getElementById('doc-status-23').innerHTML = '<span class="badge bg-success">Soumis</span>';
+          }
+          if (docName.includes('fiche') && docName.includes('liquidation')) {
+            document.getElementById('doc-status-24').innerHTML = '<span class="badge bg-success">Soumis</span>';
+          }
+          if (docName.includes('onfpp') || (docName.includes('immatriculation') && docName.includes('quittance'))) {
+            document.getElementById('doc-status-25').innerHTML = '<span class="badge bg-success">Soumis</span>';
+          }
+        {% endfor %}
+      {% endif %}
+      
+      // Marquer tous les éléments sans statut comme manquants
+      for (let i = 1; i <= 25; i++) {
+        const statusElem = document.getElementById('doc-status-' + i);
+        if (!statusElem.innerHTML) {
+          statusElem.innerHTML = '<span class="badge bg-warning text-dark">Manquant</span>';
+        }
+      }
+    });
+  }
+});
+</script>

@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ document.document.nom }} - {{ document.company.nom }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- En-tête avec les informations du document -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-primary text-white d-flex justify-content-between">
+            <h4><i class="fas fa-file me-2"></i>{{ document.document.nom }}</h4>
+            <div>
+                {% if version_info %}
+                    <span class="badge bg-info">Version du {{ version_info.date_creation|date:"d/m/Y H:i" }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <p><strong>Société :</strong> {{ company.nom }}</p>
+                    <p><strong>Type de document :</strong> {{ document.document.nom }}</p>
+                    <p><strong>Date de soumission :</strong> {{ document.date_submission|date:"d/m/Y H:i" }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Fichier :</strong> {{ file_name }}</p>
+                    <p><strong>Taille :</strong> {{ file_size }}</p>
+                    <p><strong>Type :</strong> {{ content_type }}</p>
+                </div>
+            </div>
+            
+            <!-- Boutons d'action -->
+            <div class="btn-group mb-4">
+                <a href="{{ raw_url }}" class="btn btn-primary" target="_blank">
+                    <i class="fas fa-external-link-alt me-1"></i> Ouvrir dans un nouvel onglet
+                </a>
+                <a href="{{ fichier.url }}" class="btn btn-outline-secondary" download>
+                    <i class="fas fa-download me-1"></i> Télécharger
+                </a>
+                <a href="{% url 'document_versions' document_id=document.id %}" class="btn btn-outline-info">
+                    <i class="fas fa-history me-1"></i> Historique des versions
+                </a>
+                <a href="{% url 'document_update' pk=document.id %}" class="btn btn-outline-warning">
+                    <i class="fas fa-edit me-1"></i> Modifier
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Zone de prévisualisation -->
+    <div class="card shadow">
+        <div class="card-header bg-light">
+            <h5><i class="fas fa-eye me-2"></i>Prévisualisation</h5>
+        </div>
+        <div class="card-body p-0">
+            <div id="document-preview" class="document-preview">
+                {% if content_type == 'application/pdf' %}
+                    <!-- Prévisualiseur PDF -->
+                    <div class="ratio ratio-16x9">
+                        <embed src="{{ raw_url }}" type="application/pdf" width="100%" height="100%">
+                    </div>
+                
+                {% elif 'image/' in content_type %}
+                    <!-- Prévisualiseur d'images -->
+                    <div class="text-center p-3">
+                        <img src="{{ raw_url }}" alt="{{ file_name }}" class="img-fluid">
+                    </div>
+                
+                {% elif 'video/' in content_type %}
+                    <!-- Lecteur vidéo -->
+                    <div class="ratio ratio-16x9">
+                        <video controls>
+                            <source src="{{ raw_url }}" type="{{ content_type }}">
+                            Votre navigateur ne prend pas en charge la lecture de vidéos.
+                        </video>
+                    </div>
+                    
+                {% elif 'audio/' in content_type %}
+                    <!-- Lecteur audio -->
+                    <div class="text-center p-4">
+                        <audio controls class="w-100">
+                            <source src="{{ raw_url }}" type="{{ content_type }}">
+                            Votre navigateur ne prend pas en charge la lecture audio.
+                        </audio>
+                    </div>
+                    
+                {% elif 'text/' in content_type or file_extension in "txt,log,md,xml,json,html,css,js,py,sql".split(',') %}
+                    <!-- Prévisualiseur de texte -->
+                    <div class="text-preview p-3">
+                        <div class="alert alert-info">
+                            <i class="fas fa-spinner fa-spin me-2"></i> Chargement du contenu texte...
+                        </div>
+                        <pre id="text-content" class="border p-3 bg-light" style="max-height: 500px; overflow: auto;"></pre>
+                    </div>
+                    
+                    <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        fetch('{{ raw_url }}')
+                        .then(response => response.text())
+                        .then(text => {
+                            document.getElementById('text-content').textContent = text;
+                            document.querySelector('.alert').style.display = 'none';
+                        })
+                        .catch(error => {
+                            document.getElementById('text-content').innerHTML = 
+                                '<div class="alert alert-danger">Erreur lors du chargement: ' + error + '</div>';
+                            document.querySelector('.alert').style.display = 'none';
+                        });
+                    });
+                    </script>
+                    
+                {% elif file_extension in "docx,xls,xlsx,pptx,doc,ppt".split(',') %}
+                    <!-- Message pour les fichiers Office -->
+                    <div class="text-center p-5">
+                        <div class="display-1 text-muted mb-4">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <h4>Prévisualisation non disponible pour ce type de document</h4>
+                        <p class="text-muted">
+                            Les fichiers Microsoft Office doivent être téléchargés pour être visualisés.
+                        </p>
+                        <a href="{{ fichier.url }}" class="btn btn-primary mt-3" download>
+                            <i class="fas fa-download me-1"></i> Télécharger le fichier
+                        </a>
+                    </div>
+                    
+                {% else %}
+                    <!-- Message pour les formats non pris en charge -->
+                    <div class="text-center p-5">
+                        <div class="display-1 text-muted mb-4">
+                            <i class="fas fa-file"></i>
+                        </div>
+                        <h4>Prévisualisation non disponible</h4>
+                        <p class="text-muted">
+                            Le format de fichier "{{ file_extension }}" ne peut pas être prévisualisé dans le navigateur.
+                        </p>
+                        <a href="{{ fichier.url }}" class="btn btn-primary mt-3" download>
+                            <i class="fas fa-download me-1"></i> Télécharger le fichier
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Notes de version si disponible -->
+    {% if version_info and version_info.notes %}
+    <div class="card mt-4 shadow-sm">
+        <div class="card-header bg-light">
+            <h5><i class="fas fa-comment-alt me-2"></i>Notes de version</h5>
+        </div>
+        <div class="card-body">
+            <p>{{ version_info.notes|linebreaks }}</p>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Lien de retour -->
+    <div class="mt-4 mb-5">
+        <a href="{% url 'company_detail' pk=company.id %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Retour à la société
+        </a>
+    </div>
+</div>
+
+<style>
+.document-preview {
+    min-height: 400px;
+    max-height: 800px;
+    overflow: auto;
+    border-bottom: 1px solid rgba(0,0,0,0.125);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+{% load static %}
+{% load company_extras %}
+
+{% block title %}{{ company.nom }} - DPMG Coyah{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">{{ company.nom }}</h4>
+        {% if user.is_authenticated %}
+        <div>
+            <a href="{% url 'company_update' company.id %}" class="btn btn-sm btn-light">
+                <i class="fas fa-edit"></i> Modifier
+            </a>
+            <a href="{% url 'company_delete' company.id %}" class="btn btn-sm btn-danger">
+                <i class="fas fa-trash"></i> Supprimer
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
+                <h5 class="border-bottom pb-2 mb-3">Informations générales</h5>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Date de création:</strong> {{ company.date_creation|date:"d/m/Y" }}</p>
+                        <p><strong>Nombre d'employés:</strong> {{ company.nombre_employes }}</p>
+                        <p><strong>Téléphone:</strong> {{ company.telephone|default:"Non spécifié" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Date d'autorisation:</strong> {{ company.date_autorisation|date:"d/m/Y"|default:"Non spécifiée" }}</p>
+                        <p><strong>Email:</strong> {{ company.email|default:"Non spécifié" }}</p>
+                        <p><strong>Adresse:</strong> {{ company.adresse|default:"Non spécifiée" }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                {% include "companies/include/document_status.html" with total_required=total_required total_submitted=total_submitted completion_percentage=completion_percentage %}
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <!-- Documents Soumis -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Documents Soumis</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if submitted_docs %}
+                            <div class="mb-3">
+                                <div class="input-group">
+                                    <input type="text" id="documentSearchInput" class="form-control" placeholder="Rechercher un document...">
+                                    <select id="documentDateFilter" class="form-select" style="max-width: 180px;">
+                                        <option value="">Tous les documents</option>
+                                        <option value="today">Aujourd'hui</option>
+                                        <option value="week">Cette semaine</option>
+                                        <option value="month">Ce mois</option>
+                                    </select>
+                                    <button class="btn btn-outline-secondary" id="clearDocumentFilter">
+                                        <i class="fas fa-times"></i> Effacer
+                                    </button>
+                                </div>
+                                <div class="form-text">Filtrer par nom ou par date de soumission</div>
+                            </div>
+                            <div class="list-group" id="documentsList">
+                                {% for doc in submitted_docs %}
+                                <div class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ doc.document.nom }}</h6>
+                                        <small>{{ doc.date_submission|date:"d/m/Y H:i" }}</small>
+                                    </div>
+                                    <div class="mt-2">
+                                        <div class="btn-group">
+                                            <a href="{% url 'view_document' doc.id %}" class="btn btn-sm btn-info" target="_blank">
+                                                <i class="fas fa-eye"></i> Voir
+                                            </a>
+                                            <a href="{{ doc.fichier.url }}" class="btn btn-sm btn-secondary" download>
+                                                <i class="fas fa-download"></i> Télécharger
+                                            </a>
+                                            <a href="{% url 'email_document' doc.id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-envelope"></i> Envoyer par email
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#previewModal-{{ doc.id }}">
+                                                <i class="fas fa-search"></i> Prévisualiser
+                                            </button>
+                                        </div>
+                                        {% if user.is_authenticated %}
+                                        <a href="{% url 'document_update' doc.id %}" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-sync-alt"></i> Mettre à jour
+                                        </a>
+                                        <a href="{% url 'document_delete' doc.id %}" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i> Supprimer
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">
+                                Aucun document n'a encore été soumis.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documents Manquants -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">Documents Requis Manquants</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if missing_docs %}
+                            <div class="list-group">
+                                {% for doc in missing_docs %}
+                                <div class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ doc.nom }}</h6>
+                                        <a href="{% url 'submit_document' company.id %}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-upload"></i> Soumettre
+                                        </a>
+                                    </div>
+                                    {% if doc.description %}
+                                    <p class="mb-1 text-muted">{{ doc.description }}</p>
+                                    {% endif %}
+                                    {% if doc.condition %}
+                                    <p class="mb-0"><small class="text-info"><i class="fas fa-info-circle"></i> {{ doc.condition }}</small></p>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-success">
+                                Tous les documents requis ont été soumis. Bravo!
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-footer">
+        <a href="{% url 'company_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Retour à la liste
+        </a>
+        {% if missing_docs %}
+        <a href="{% url 'submit_document' company.id %}" class="btn btn-primary">
+            <i class="fas fa-upload"></i> Soumettre un document
+        </a>
+        <a href="{% url 'submit_multiple_documents' company.id %}" class="btn btn-success">
+            <i class="fas fa-file-upload"></i> Soumettre les 25 documents requis
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Documents administratifs -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Documents Administratifs</h5>
+        {% if user.is_authenticated %}
+        <div>
+            <a href="{% url 'admin_doc_create' %}" class="btn btn-sm btn-light">
+                <i class="fas fa-plus-circle"></i> Ajouter un document
+            </a>
+            <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#requiredDocsModal">
+                <i class="fas fa-list-check"></i> Liste des documents requis
+            </button>
+        </div>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        {% if administrative_documents %}
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Numéro</th>
+                            <th>Titre</th>
+                            <th>Date d'enregistrement</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for document in administrative_documents %}
+                        <tr>
+                            <td>{{ document.get_type_display }}</td>
+                            <td>{{ document.numero }}</td>
+                            <td>{{ document.titre }}</td>
+                            <td>{{ document.date_enregistrement|date:"d/m/Y" }}</td>
+                            <td class="text-center">
+                                <a href="{% url 'admin_doc_detail' document.id %}" class="btn btn-sm btn-info">
+                                    <i class="fas fa-eye"></i> Voir
+                                </a>
+                                {% if user.is_authenticated %}
+                                <a href="{% url 'admin_doc_update' document.id %}" class="btn btn-sm btn-warning">
+                                    <i class="fas fa-edit"></i> Modifier
+                                </a>
+                                <a href="{% url 'admin_doc_delete' document.id %}" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i> Supprimer
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                Aucun document administratif n'a été ajouté.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% include "companies/include/required_docs_modal.html" %}
+
+<!-- Modal pour prévisualiser les documents -->
+{% for doc in submitted_docs %}
+<div class="modal fade" id="previewModal-{{ doc.id }}" tabindex="-1" aria-labelledby="previewModalLabel-{{ doc.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="previewModalLabel-{{ doc.id }}">{{ doc.document.nom }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <embed src="{{ doc.fichier.url }}" type="application/pdf" width="100%" height="500px">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}

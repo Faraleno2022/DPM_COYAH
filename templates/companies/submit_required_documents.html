@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block title %}Soumettre les documents requis | {{ company.nom }} | DPMG Coyah{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Fil d'Ariane -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'company_list' %}">Sociétés</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'company_detail' company.id %}">{{ company.nom }}</a></li>
+            <li class="breadcrumb-item active">Soumettre les documents requis</li>
+        </ol>
+    </nav>
+
+    <!-- Titre de la page -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-file-upload me-2"></i>Soumettre les documents administratifs requis</h2>
+        <div>
+            <a href="{% url 'company_detail' company.id %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Retour
+            </a>
+        </div>
+    </div>
+
+    <!-- Card principale -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Liste des 25 documents administratifs requis</h5>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-3">
+                Ce formulaire vous permet de soumettre les documents administratifs requis pour la société <strong>{{ company.nom }}</strong>.
+                <br>Vous pouvez soumettre plusieurs documents à la fois. Les documents déjà soumis sont marqués comme tels.
+            </p>
+
+            <form method="post" enctype="multipart/form-data" id="requiredDocsForm">
+                {% csrf_token %}
+                
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="5%">#</th>
+                                <th width="40%">Document requis</th>
+                                <th width="20%">Statut</th>
+                                <th width="35%">Fichier</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for doc in documents_data %}
+                            <tr id="doc-row-{{ doc.id }}">
+                                <td>{{ doc.id }}</td>
+                                <td>{{ doc.name }}</td>
+                                <td id="doc-status-{{ doc.id }}">
+                                    {% if doc.is_submitted %}
+                                        <span class="badge bg-success">Soumis</span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark">Manquant</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if doc.is_submitted %}
+                                        <span class="text-muted"><i class="fas fa-check-circle text-success me-1"></i>Document déjà soumis</span>
+                                    {% else %}
+                                        {{ doc.field }}
+                                        <div class="form-text text-muted">Formats acceptés: PDF, DOC, DOCX, JPG, PNG</div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload me-1"></i> Soumettre les documents sélectionnés
+                    </button>
+                    <a href="{% url 'company_detail' company.id %}" class="btn btn-outline-secondary ms-2">
+                        <i class="fas fa-times me-1"></i> Annuler
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Ajouter une prévisualisation des fichiers sélectionnés
+        $('input[type="file"]').change(function() {
+            const fileName = $(this).val().split('\\').pop();
+            const docId = $(this).data('document-id');
+            
+            if (fileName) {
+                const fileSize = this.files[0].size / 1024 / 1024; // en MB
+                const fileInfo = `${fileName} (${fileSize.toFixed(2)} MB)`;
+                
+                // Ajouter une notification à côté du champ
+                const infoSpan = $(this).next('.file-info');
+                if (infoSpan.length) {
+                    infoSpan.html(`<i class="fas fa-check-circle text-success me-1"></i> ${fileInfo}`);
+                } else {
+                    $(this).after(`<small class="file-info text-success ms-2"><i class="fas fa-check-circle"></i> ${fileInfo}</small>`);
+                }
+                
+                // Mettre à jour visuellement la ligne du tableau pour montrer qu'un fichier est sélectionné
+                $(`#doc-row-${docId}`).addClass('table-success');
+                $(`#doc-status-${docId}`).html('<span class="badge bg-info">Prêt à soumettre</span>');
+            } else {
+                // Réinitialiser si aucun fichier n'est sélectionné
+                $(`#doc-row-${docId}`).removeClass('table-success');
+                $(`#doc-status-${docId}`).html('<span class="badge bg-warning text-dark">Manquant</span>');
+                $(this).next('.file-info').remove();
+            }
+        });
+        
+        // Validation du formulaire avant soumission
+        $('#requiredDocsForm').submit(function(e) {
+            const filesSelected = $('input[type="file"]').filter(function() {
+                return $(this).val() !== '';
+            }).length;
+            
+            if (filesSelected === 0) {
+                e.preventDefault();
+                alert('Veuillez sélectionner au moins un document à soumettre.');
+                return false;
+            }
+            return true;
+        });
+    });
+</script>
+{% endblock %}
