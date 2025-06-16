@@ -84,7 +84,7 @@
                         </audio>
                     </div>
                     
-                {% elif 'text/' in content_type or file_extension in "txt,log,md,xml,json,html,css,js,py,sql".split(',') %}
+                {% elif 'text/' in content_type or file_extension == 'txt' or file_extension == 'log' or file_extension == 'md' or file_extension == 'xml' or file_extension == 'json' or file_extension == 'html' or file_extension == 'css' or file_extension == 'js' or file_extension == 'py' or file_extension == 'sql' %}
                     <!-- Prévisualiseur de texte -->
                     <div class="text-preview p-3">
                         <div class="alert alert-info">
@@ -109,7 +109,7 @@
                     });
                     </script>
                     
-                {% elif file_extension in "docx,xls,xlsx,pptx,doc,ppt".split(',') %}
+                {% elif file_extension == 'docx' or file_extension == 'xls' or file_extension == 'xlsx' or file_extension == 'pptx' or file_extension == 'doc' or file_extension == 'ppt' %}
                     <!-- Message pour les fichiers Office -->
                     <div class="text-center p-5">
                         <div class="display-1 text-muted mb-4">

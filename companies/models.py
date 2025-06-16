@@ -1,8 +1,9 @@
 from django.db import models
-from django.urls import reverse
 from django.core.validators import MinValueValidator, FileExtensionValidator
+from django.urls import reverse
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.contrib.auth.models import User, Group
 
 # Ajout des validateurs d'upload sécurisé
 def validate_file_size(value):
@@ -28,6 +29,7 @@ class Company(models.Model):
     telephone = models.CharField("Téléphone", max_length=20, blank=True, null=True)
     email = models.EmailField("Email", blank=True, null=True)
     date_autorisation = models.DateField("Date d'autorisation d'exploitation", blank=True, null=True)
+    dpmg = models.ForeignKey('companies.DPMGProfile', on_delete=models.CASCADE, related_name="companies", verbose_name="DPMG", null=True)
     
     class Meta:
         verbose_name = "Société"
@@ -87,6 +89,27 @@ class Company(models.Model):
         
         # Retourner les documents requis qui ne sont pas dans la liste des soumis
         return required_docs.exclude(id__in=submitted_doc_ids)
+        
+    def user_has_access(self, user):
+        """
+        Vérifie si un utilisateur a accès à cette société.
+        
+        Args:
+            user: L'objet utilisateur à vérifier
+            
+        Returns:
+            bool: True si l'utilisateur a accès, False sinon
+        """
+        # Les administrateurs ont accès à toutes les sociétés
+        if user.is_superuser:
+            return True
+            
+        # Vérifier si l'utilisateur est associé au DPMG de cette société
+        try:
+            return self.dpmg == user.dpmg_profile
+        except (AttributeError, TypeError):
+            # Si l'utilisateur n'a pas de profil DPMG ou si la société n'a pas de DPMG
+            return False
 
 
 class RequiredDocument(models.Model):
@@ -119,7 +142,7 @@ class DocumentSubmission(models.Model):
         verbose_name="Société"
     )
     document = models.ForeignKey(
-        RequiredDocument, 
+        'companies.RequiredDocument', 
         on_delete=models.CASCADE,
         related_name='submissions',
         verbose_name="Type de document"

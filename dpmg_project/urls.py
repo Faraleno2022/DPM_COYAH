@@ -16,11 +16,12 @@ urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')),
 ]
 
+# Ne pas servir les fichiers média directement en production
+# En développement, c'est acceptable pour faciliter le développement
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 else:
-    # En production, utilisez un serveur web comme Nginx pour servir les fichiers statiques et médias
-    # Ces lignes sont là pour information, elles n'ont pas d'effet sur le serveur de production
-    # Tout doit être configuré au niveau du serveur web (Nginx/Apache)
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    # En production, tous les fichiers média doivent passer par une vue sécurisée
+    urlpatterns += [
+        path('media/<path:path>', include('companies.secure_media_urls')),
+    ]

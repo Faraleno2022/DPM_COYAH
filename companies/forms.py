@@ -283,10 +283,20 @@ class DPMGRegistrationForm(forms.ModelForm):
         # Ne pas enregistrer le formulaire directement, nous le ferons manuellement
         dpmg_profile = super().save(commit=False)
         
+        # Double vérification que le nom d'utilisateur est unique pour éviter les conditions de course
+        username = self.cleaned_data['username']
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError("Ce nom d'utilisateur est déjà utilisé.")
+            
+        # Double vérification que l'email est unique
+        email = self.cleaned_data['email']
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError("Cette adresse e-mail est déjà utilisée.")
+        
         # Créer l'utilisateur
         user = User.objects.create_user(
-            username=self.cleaned_data['username'],
-            email=self.cleaned_data['email'],
+            username=username,
+            email=email,
             password=self.cleaned_data['password1']
         )
         
@@ -321,3 +331,25 @@ class DPMGProfileForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Rendre le logo optionnel pour permettre de le conserver inchangé
         self.fields['logo'].required = False
+
+
+class DPMGProfileCompletionForm(forms.ModelForm):
+    """Formulaire pour la complétion d'un profil DPMG après première connexion"""
+    class Meta:
+        model = DPMGProfile
+        fields = ['prefecture', 'region', 'telephone', 'adresse', 'code_dpmg', 'logo']
+        widgets = {
+            'prefecture': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Préfecture'}),
+            'region': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Région'}),
+            'telephone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Téléphone'}),
+            'adresse': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Adresse complète'}),
+            'code_dpmg': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Code unique DPMG'}),
+            'logo': forms.FileInput(attrs={'class': 'form-control'})
+        }
+
+    def clean_code_dpmg(self):
+        """Vérifie que le code DPMG est unique"""
+        code_dpmg = self.cleaned_data.get('code_dpmg')
+        if DPMGProfile.objects.filter(code_dpmg=code_dpmg).exists():
+            raise forms.ValidationError("Ce code DPMG est déjà utilisé.")
+        return code_dpmg

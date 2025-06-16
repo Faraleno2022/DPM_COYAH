@@ -1,12 +1,14 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import User, Group
 from django.urls import reverse_lazy, reverse
 from django.contrib import messages
 from django.http import HttpResponse, Http404
 from django.core.mail import EmailMessage
 from django.core.exceptions import PermissionDenied
+from django.db import IntegrityError
 from django.db.models import Count
 from django.conf import settings
 from mimetypes import guess_type
@@ -18,27 +20,59 @@ from .forms import (
     CompanyForm, DocumentSubmissionForm, DocumentUpdateForm, MultiDocumentSubmissionForm,
     RequiredDocumentsForm, EmailDocumentForm, EmailDocumentsForm, 
     DocumentVersionForm as DocumentVersionFormStandard,
-    DPMGRegistrationForm, DPMGProfileForm
+    DPMGRegistrationForm, DPMGProfileForm, DPMGProfileCompletionForm
 )
 from administration_docs.models import AdministrativeDocument
+from django import forms
 
 
-class CompanyListView(ListView):
+class CompanyListView(LoginRequiredMixin, ListView):
     """Affiche la liste des sociétés"""
     model = Company
     context_object_name = 'companies'
     template_name = 'companies/company_list.html'
     
     def get_queryset(self):
-        """Optimisation: préchargement des soumissions de documents pour le calcul du pourcentage de complétion"""
-        return Company.objects.prefetch_related('submissions').all()
+        """Optimisation: préchargement des soumissions de documents pour le calcul du pourcentage de complétion
+           et filtrage par DPMG de l'utilisateur connecté"""
+        user = self.request.user
+        if user.is_superuser:
+            # Les administrateurs voient toutes les sociétés
+            return Company.objects.prefetch_related('submissions').all()
+        else:
+            # Les utilisateurs normaux ne voient que les sociétés associées à leur DPMG
+            try:
+                dpmg_profile = user.dpmg_profile
+                return Company.objects.prefetch_related('submissions').filter(dpmg=dpmg_profile)
+            except AttributeError:
+                # Si l'utilisateur n'a pas de profil DPMG, retourner un QuerySet vide
+                return Company.objects.none()
 
 
-class CompanyDetailView(DetailView):
+class CompanyDetailView(LoginRequiredMixin, DetailView):
     """Affiche le détail d'une société"""
     model = Company
     context_object_name = 'company'
     template_name = 'companies/company_detail.html'
+    
+    def get_object(self, queryset=None):
+        """Vérifier que l'utilisateur a le droit d'accéder à cette société"""
+        obj = super().get_object(queryset)
+        user = self.request.user
+        
+        # Les admins peuvent voir toutes les sociétés
+        if user.is_superuser:
+            return obj
+            
+        # Les utilisateurs normaux ne peuvent voir que les sociétés de leur DPMG
+        try:
+            if obj.dpmg != user.dpmg_profile:
+                raise PermissionDenied("Vous n'avez pas accès à cette société.")
+        except AttributeError:
+            # Si l'utilisateur n'a pas de profil DPMG
+            raise PermissionDenied("Vous n'avez pas de profil DPMG associé à votre compte.")
+            
+        return obj
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -89,6 +123,27 @@ class CompanyCreateView(LoginRequiredMixin, CreateView):
         return context
     
     def form_valid(self, form):
+        # Associer la société au DPMG de l'utilisateur connecté
+        company = form.instance
+        user = self.request.user
+        
+        # Si c'est un superadmin, on peut permettre la création sans DPMG ou attribuer à un DPMG existant
+        if user.is_superuser:
+            # Si aucun DPMG n'est spécifié dans le formulaire et qu'il en existe au moins un
+            if not hasattr(company, 'dpmg') or company.dpmg is None:
+                # On peut assigner le premier DPMG disponible si on veut
+                first_dpmg = DPMGProfile.objects.first()
+                if first_dpmg:
+                    company.dpmg = first_dpmg
+                # Sinon, on peut continuer sans DPMG (cela dépend des contraintes de votre modèle)
+        else:
+            # Pour les utilisateurs normaux, on exige un profil DPMG
+            try:
+                company.dpmg = user.dpmg_profile
+            except AttributeError:
+                messages.error(self.request, "Vous n'avez pas de profil DPMG associé à votre compte utilisateur.")
+                return self.form_invalid(form)
+            
         messages.success(self.request, 'Société créée avec succès!')
         return super().form_valid(form)
 
@@ -98,6 +153,25 @@ class CompanyUpdateView(LoginRequiredMixin, UpdateView):
     model = Company
     form_class = CompanyForm
     template_name = 'companies/company_form.html'
+    
+    def get_object(self, queryset=None):
+        """Vérifier que l'utilisateur a le droit de modifier cette société"""
+        obj = super().get_object(queryset)
+        user = self.request.user
+        
+        # Les admins peuvent modifier toutes les sociétés
+        if user.is_superuser:
+            return obj
+            
+        # Les utilisateurs normaux ne peuvent modifier que les sociétés de leur DPMG
+        try:
+            if obj.dpmg != user.dpmg_profile:
+                raise PermissionDenied("Vous n'avez pas le droit de modifier cette société.")
+        except AttributeError:
+            # Si l'utilisateur n'a pas de profil DPMG
+            raise PermissionDenied("Vous n'avez pas de profil DPMG associé à votre compte.")
+            
+        return obj
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -114,6 +188,25 @@ class CompanyDeleteView(LoginRequiredMixin, DeleteView):
     model = Company
     template_name = 'companies/company_confirm_delete.html'
     success_url = reverse_lazy('company_list')
+    
+    def get_object(self, queryset=None):
+        """Vérifier que l'utilisateur a le droit de supprimer cette société"""
+        obj = super().get_object(queryset)
+        user = self.request.user
+        
+        # Les admins peuvent supprimer toutes les sociétés
+        if user.is_superuser:
+            return obj
+            
+        # Les utilisateurs normaux ne peuvent supprimer que les sociétés de leur DPMG
+        try:
+            if obj.dpmg != user.dpmg_profile:
+                raise PermissionDenied("Vous n'avez pas le droit de supprimer cette société.")
+        except AttributeError:
+            # Si l'utilisateur n'a pas de profil DPMG
+            raise PermissionDenied("Vous n'avez pas de profil DPMG associé à votre compte.")
+            
+        return obj
     
     def delete(self, request, *args, **kwargs):
         messages.success(request, 'Société supprimée avec succès!')
@@ -295,7 +388,7 @@ class DocumentDeleteView(LoginRequiredMixin, DeleteView):
         
     def get_object(self, queryset=None):
         """
-        Récupère l'objet avec gestion des erreurs.
+        Récupères l'objet avec gestion des erreurs.
         """
         try:
             return super().get_object(queryset)
@@ -341,8 +434,15 @@ def view_document(request, document_id):
     document = get_object_or_404(DocumentSubmission, pk=document_id)
     
     # Vérifier les autorisations
-    if not request.user.is_superuser and not document.company.user_has_access(request.user):
-        raise PermissionDenied
+    user = request.user
+    if not user.is_superuser:
+        try:
+            # Vérifier si l'utilisateur est associé au même DPMG que la société
+            if document.company.dpmg and user.dpmg_profile and document.company.dpmg != user.dpmg_profile:
+                raise PermissionDenied("Vous n'avez pas le droit d'accéder à ce document.")
+        except AttributeError:
+            # Si l'utilisateur n'a pas de profil DPMG ou la société n'a pas de DPMG associé
+            raise PermissionDenied("Vous n'avez pas les permissions nécessaires.")
     
     # Vérifier si une version spécifique est demandée
     version_id = request.GET.get('version')
@@ -552,10 +652,17 @@ def document_versions(request, document_id):
     # Récupérer le document
     document = get_object_or_404(DocumentSubmission, pk=document_id)
     
-    # Vérifier les autorisations
-    if not request.user.is_superuser and not document.company.user_has_access(request.user):
-        raise PermissionDenied
-    
+    # Vérification des permissions
+    user = request.user
+    if not user.is_superuser:
+        try:
+            # Vérifier si l'utilisateur est associé au même DPMG que la société
+            if document.company.dpmg and user.dpmg_profile and document.company.dpmg != user.dpmg_profile:
+                raise PermissionDenied("Vous n'avez pas le droit d'accéder à ces versions de document.")
+        except AttributeError:
+            # Si l'utilisateur n'a pas de profil DPMG ou la société n'a pas de DPMG associé
+            raise PermissionDenied("Vous n'avez pas les permissions nécessaires.")
+            
     # Récupérer toutes les versions du document
     versions = DocumentVersion.objects.filter(document=document).order_by('-date_creation')
     
@@ -564,10 +671,7 @@ def document_versions(request, document_id):
         if form.is_valid():
             fichier = form.cleaned_data['fichier']
             notes = form.cleaned_data['notes']
-            
-            # Créer une nouvelle version
             document.create_new_version(fichier, notes)
-            
             messages.success(request, "Nouvelle version ajoutée avec succès!")
             return redirect('document_versions', document_id=document.id)
     else:
@@ -576,7 +680,9 @@ def document_versions(request, document_id):
     return render(request, 'companies/document_versions.html', {
         'document': document,
         'versions': versions,
-        'form': form
+        'form': form,
+        'company_id_str': str(document.company.id),
+        'document_id_str': str(document.id)
     })
 
 
@@ -610,16 +716,24 @@ def activate_document_version(request, version_id):
 
 # ======== Vues pour la gestion des comptes DPMG ========
 
+@user_passes_test(lambda u: u.is_superuser)
 def dpmg_register(request):
     """
     Vue pour l'inscription d'un nouveau DPMG.
+    Uniquement accessible aux administrateurs.
     """
     if request.method == 'POST':
         form = DPMGRegistrationForm(request.POST, request.FILES)
-        if form.is_valid():
-            dpmg = form.save()
-            messages.success(request, f"Le compte DPMG pour {dpmg.prefecture} a été créé avec succès! Vous pouvez maintenant vous connecter.")
-            return redirect('login')
+        try:
+            if form.is_valid():
+                dpmg = form.save()
+                messages.success(request, f"Le compte DPMG pour {dpmg.prefecture} a été créé avec succès! Vous pouvez maintenant vous connecter.")
+                return redirect('login')
+        except forms.ValidationError as e:
+            messages.error(request, str(e))
+        except IntegrityError:
+            # En cas de conflit d'intégrité dans la base de données
+            messages.error(request, "Un utilisateur avec ce nom d'utilisateur ou cet email existe déjà.")
     else:
         form = DPMGRegistrationForm()
     
@@ -627,6 +741,44 @@ def dpmg_register(request):
         'form': form,
         'title': "Inscription d'un nouveau DPMG"
     })
+
+
+def complete_dpmg_profile(request):
+    """
+    Vue pour permettre à un utilisateur de compléter son profil DPMG
+    après sa première connexion.
+    """
+    # Vérifier si l'utilisateur a déjà un profil DPMG
+    try:
+        profile = request.user.dpmg_profile
+        # L'utilisateur a déjà un profil, rediriger vers le tableau de bord
+        messages.info(request, "Votre profil DPMG est déjà configuré.")
+        return redirect('dpmg_dashboard')
+    except:
+        # L'utilisateur n'a pas encore de profil DPMG, lui permettre d'en créer un
+        if request.method == 'POST':
+            # Créer un formulaire spécifique pour la complétion de profil (sans création d'utilisateur)
+            form = DPMGProfileCompletionForm(request.POST, request.FILES)
+            if form.is_valid():
+                # Créer le profil et l'associer à l'utilisateur actuel
+                dpmg_profile = form.save(commit=False)
+                dpmg_profile.user = request.user
+                dpmg_profile.save()
+                
+                # Ajouter l'utilisateur au groupe DPMG
+                dpmg_group, created = Group.objects.get_or_create(name='DPMG')
+                request.user.groups.add(dpmg_group)
+                
+                messages.success(request, "Votre profil DPMG a été créé avec succès!")
+                return redirect('dpmg_dashboard')
+        else:
+            # Afficher le formulaire vide
+            form = DPMGProfileCompletionForm()
+        
+        return render(request, 'dpmg/complete_profile.html', {
+            'form': form,
+            'title': "Compléter votre profil DPMG"
+        })
 
 
 @login_required
@@ -696,4 +848,62 @@ def dpmg_profile(request):
         'form': form,
         'dpmg': dpmg_profile,
         'title': "Mon profil DPMG"
+    })
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def dpmg_list(request):
+    """
+    Vue qui affiche la liste de tous les profils DPMG.
+    Accessible uniquement par les administrateurs.
+    """
+    # Récupérer tous les profils DPMG
+    dpmg_profiles = DPMGProfile.objects.all().select_related('user')
+    
+    # Statistiques pour chaque DPMG
+    for dpmg in dpmg_profiles:
+        # Nombre de sociétés gérées par ce DPMG
+        dpmg.company_count = Company.objects.filter(dpmg=dpmg).count()
+        
+        # Nombre de documents soumis associés à ce DPMG (via les sociétés)
+        companies = Company.objects.filter(dpmg=dpmg)
+        dpmg.document_count = DocumentSubmission.objects.filter(company__in=companies).count()
+    
+    return render(request, 'dpmg/dpmg_list.html', {
+        'dpmg_profiles': dpmg_profiles,
+        'title': 'Liste des Profils DPMG'
+    })
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def dpmg_detail(request, dpmg_id):
+    """
+    Vue qui affiche les détails d'un profil DPMG spécifique.
+    Accessible uniquement par les administrateurs.
+    """
+    # Récupérer le profil DPMG
+    dpmg_profile = get_object_or_404(DPMGProfile, id=dpmg_id)
+    
+    # Récupérer les sociétés associées à ce DPMG
+    companies = Company.objects.filter(dpmg=dpmg_profile)
+    
+    # Récupérer les documents associés à ces sociétés
+    documents = DocumentSubmission.objects.filter(company__in=companies).order_by('-date_soumission')[:10]  # Limiter aux 10 plus récents
+    
+    # Calculer des statistiques
+    total_companies = companies.count()
+    total_documents = DocumentSubmission.objects.filter(company__in=companies).count()
+    
+    # Calculer le taux moyen de complétion des sociétés
+    completion_rates = [company.get_completion_percentage() for company in companies]
+    avg_completion = sum(completion_rates) / len(completion_rates) if completion_rates else 0
+    
+    return render(request, 'dpmg/dpmg_detail.html', {
+        'dpmg': dpmg_profile,
+        'companies': companies,
+        'documents': documents,
+        'total_companies': total_companies,
+        'total_documents': total_documents,
+        'avg_completion': avg_completion,
+        'title': f'Profil DPMG: {dpmg_profile.prefecture}'
     })

@@ -32,4 +32,7 @@ urlpatterns = [
     path('dpmg/register/', views.dpmg_register, name='dpmg_register'),
     path('dpmg/dashboard/', views.dpmg_dashboard, name='dpmg_dashboard'),
     path('dpmg/profile/', views.dpmg_profile, name='dpmg_profile'),
+    path('dpmg/complete-profile/', views.complete_dpmg_profile, name='complete_dpmg_profile'),
+    path('dpmg/list/', views.dpmg_list, name='dpmg_list'),
+    path('dpmg/<int:dpmg_id>/', views.dpmg_detail, name='dpmg_detail'),
 ]

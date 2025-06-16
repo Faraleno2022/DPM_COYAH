@@ -1,61 +1,61 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Historique des versions - {{ document.document.nom }}{% endblock %}
+{% block title %}Historique des Versions - {{ document.document.name }}{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
     <div class="row mb-4">
         <div class="col">
-            <h2><i class="fas fa-history me-2"></i>Historique des versions</h2>
-            <h4 class="text-muted">{{ document.document.nom }} - {{ document.company.nom }}</h4>
+            <h2><i class="fas fa-history me-2"></i>Historique des Versions</h2>
+            <h4 class="text-muted">{{ document.document.name }} - {{ document.company.name }}</h4>
         </div>
     </div>
 
-    <!-- Carte d'information sur le document -->
+    <!-- Information sur le document -->
     <div class="card mb-4 shadow-sm">
         <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">Informations sur le document</h5>
+            <h5 class="mb-0">Informations sur le Document</h5>
         </div>
         <div class="card-body">
             <div class="row">
                 <div class="col-md-6">
-                    <p><strong>Société :</strong> {{ document.company.nom }}</p>
-                    <p><strong>Type de document :</strong> {{ document.document.nom }}</p>
-                    <p><strong>Première soumission :</strong> {{ document.date_submission|date:"d/m/Y H:i" }}</p>
+                    <p><strong>Société :</strong> {{ document.company.name }}</p>
+                    <p><strong>Type de Document :</strong> {{ document.document.name }}</p>
+                    <p><strong>Première Soumission :</strong> {{ document.date_submission|date:"Y-m-d H:i" }}</p>
                 </div>
                 <div class="col-md-6">
-                    <p><strong>Nombre de versions :</strong> {{ versions.count }}</p>
-                    <p><strong>Dernière mise à jour :</strong> 
+                    <p><strong>Nombre de Versions :</strong> {{ versions.count }}</p>
+                    <p><strong>Dernière Mise à Jour :</strong> 
                         {% if versions.first %}
-                            {{ versions.first.date_creation|date:"d/m/Y H:i" }}
+                            {{ versions.first.date_creation|date:"Y-m-d H:i" }}
                         {% else %}
-                            {{ document.date_submission|date:"d/m/Y H:i" }}
+                            {{ document.date_submission|date:"Y-m-d H:i" }}
                         {% endif %}
                     </p>
-                    <p><strong>Fichier actuel :</strong> {{ document.fichier.name|cut:"documents/"|cut:document.company.id|cut:document.document.id|cut:"/" }}</p>
+                    <p><strong>Fichier Actuel :</strong> {{ document.fichier.name|cut:"documents/"|cut:company_id_str|cut:document_id_str|cut:"/" }}</p>
                 </div>
             </div>
             <div class="mt-3">
                 <a href="{% url 'view_document' document_id=document.id %}" class="btn btn-primary">
-                    <i class="fas fa-eye me-1"></i> Visualiser la version actuelle
+                    <i class="fas fa-eye me-1"></i> Voir la Version Actuelle
                 </a>
                 <a href="{% url 'document_update' pk=document.id %}" class="btn btn-warning">
-                    <i class="fas fa-edit me-1"></i> Mettre à jour
+                    <i class="fas fa-edit me-1"></i> Mettre à Jour
                 </a>
                 <a href="{% url 'company_detail' pk=document.company.id %}" class="btn btn-outline-secondary">
-                    <i class="fas fa-arrow-left me-1"></i> Retour à la société
+                    <i class="fas fa-arrow-left me-1"></i> Retour à la Société
                 </a>
             </div>
         </div>
     </div>
 
     <div class="row">
-        <!-- Formulaire d'ajout d'une nouvelle version -->
+        <!-- Formulaire pour nouvelle version -->
         <div class="col-md-4 mb-4">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-success text-white">
-                    <h5 class="mb-0">Ajouter une nouvelle version</h5>
+                    <h5 class="mb-0">Ajouter une Nouvelle Version</h5>
                 </div>
                 <div class="card-body">
                     <form method="post" enctype="multipart/form-data" class="form">
@@ -82,7 +82,7 @@
                         </div>
                         <div class="d-grid">
                             <button type="submit" class="btn btn-success">
-                                <i class="fas fa-plus-circle me-1"></i> Ajouter cette version
+                                <i class="fas fa-plus-circle me-1"></i> Ajouter Cette Version
                             </button>
                         </div>
                     </form>
@@ -94,7 +94,7 @@
         <div class="col-md-8">
             <div class="card shadow-sm">
                 <div class="card-header bg-light">
-                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Versions disponibles</h5>
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Versions Disponibles</h5>
                 </div>
                 <div class="card-body p-0">
                     {% if versions %}
@@ -103,7 +103,7 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>Date</th>
-                                        <th>Nom du fichier</th>
+                                        <th>Nom du Fichier</th>
                                         <th>Notes</th>
                                         <th>Statut</th>
                                         <th>Actions</th>
@@ -112,9 +112,9 @@
                                 <tbody>
                                     {% for version in versions %}
                                     <tr{% if version.is_current %} class="table-active"{% endif %}>
-                                        <td>{{ version.date_creation|date:"d/m/Y H:i" }}</td>
+                                        <td>{{ version.date_creation|date:"Y-m-d H:i" }}</td>
                                         <td>
-                                            {{ version.fichier.name|cut:"documents/"|cut:document.company.id|cut:document.document.id|cut:"/" }}
+                                            {{ version.fichier.name|cut:"documents/"|cut:company_id_str|cut:document_id_str|cut:"/" }}
                                         </td>
                                         <td>
                                             {% if version.notes %}
@@ -127,9 +127,9 @@
                                         </td>
                                         <td>
                                             {% if version.is_current %}
-                                                <span class="badge bg-success">Version actuelle</span>
+                                                <span class="badge bg-success">Version Actuelle</span>
                                             {% else %}
-                                                <span class="badge bg-secondary">Archive</span>
+                                                <span class="badge bg-secondary">Archivée</span>
                                             {% endif %}
                                         </td>
                                         <td>
@@ -155,7 +155,7 @@
                                 <i class="fas fa-info-circle fa-2x"></i>
                             </div>
                             <p>Aucune version précédente trouvée.</p>
-                            <p>Les versions seront créées automatiquement quand vous mettrez à jour ce document.</p>
+                            <p>Les versions seront créées automatiquement lorsque vous mettrez à jour ce document.</p>
                         </div>
                     {% endif %}
                 </div>
@@ -166,7 +166,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // Activer les tooltips Bootstrap
+    // Activation des tooltips Bootstrap
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl)
