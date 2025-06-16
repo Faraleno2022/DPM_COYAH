@@ -1,23 +1,47 @@
-Set-Content -Path .gitignore -Value @"
-# Django
-*.log
-*.pot
-*.pyc
-__pycache__/
-local_settings.py
-db.sqlite3
-media/
-
-# Environnement
-.env
-
-# Fichiers générés
-staticfiles/
-
-# Cache et autres
-.DS_Store
-.idea/
-.vscode/
-venv/
+# Environnements virtuels
+venv*/
+.venv/
 env/
-"@
+.venv
+venv
+ENV/
+env.bak/
+venv_dpmg/
+
+# Fichiers Python compilés
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Fichiers de logs
+*.log
+
+# Base de données locale
+*.sqlite3
+db.sqlite3
+
+# Fichiers d’environnement
+.env
+.env.*
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Dossiers de configuration d’IDE
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Fichiers de migration inutiles (optionnel, à adapter)
+# Si tu veux garder les migrations, retire cette ligne
+# */migrations/*.pyc
+
+# Fichiers de cache pip
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Static/media générés (à adapter selon ton projet)
+staticfiles/
+media/
